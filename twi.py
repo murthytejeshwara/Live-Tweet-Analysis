@@ -5,14 +5,11 @@ warnings.filterwarnings("ignore")
 import pandas as pd
 import numpy as np
 import tweepy
-import json
-from tweepy import OAuthHandler
 import re
 from textblob import TextBlob
 from geopy import Nominatim
-import pydeck as pdk
 import plotly.express as px
-from datetime import datetime, timedelta
+from datetime import timedelta
 #To Hide Warnings
 st.set_option('deprecation.showfileUploaderEncoding', False)
 st.set_option('deprecation.showPyplotGlobalUse', False)
