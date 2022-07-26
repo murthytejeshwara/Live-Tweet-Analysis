@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import tweepy
 import re
+import pydeck as pdk
 from textblob import TextBlob
 from geopy import Nominatim
 import plotly.express as px
@@ -42,7 +43,6 @@ def main():
     consumer_secret = os.getenv("CONSUMER_SECRET")
     access_token = os.getenv("ACCESS_TOKEN")
     access_token_secret = os.getenv("ACCESS_TOKEN_SECRET")
-
     # Use the above credentials to authenticate the API.
 
     auth = tweepy.OAuthHandler( consumer_key , consumer_secret )
@@ -106,14 +106,14 @@ def main():
                 locator = Nominatim(user_agent="myGeocoder")
                 location = locator.geocode(df["User_location"][i])
                 if location==None:
-                    lat.append(None)
-                    lon.append(None)
+                    lat.append(200)
+                    lon.append(200)
                 else:
                     lat.append(location.latitude)
                     lon.append(location.longitude)
             else:
-                lat.append(None)
-                lon.append(None)
+                lat.append(200)
+                lon.append(200)
         df["lat"]= lat
         df["lon"]= lon
         return df
@@ -122,7 +122,7 @@ def main():
 
 
     # Collect Input from user :
-    c = st.number_input("Enter Tweet count",min_value=50)
+    c = st.number_input("Enter Tweet count",min_value=10)
     Topic = str(st.text_input("Enter the topic you are interested in (Press Enter once done)"))
     # Topic = "modi"
 
@@ -173,16 +173,57 @@ def main():
 
 
         st.subheader("Distribution of users with respect to geographical locations")
-
-        with st.spinner("Please wait, getting coordinates to plot"):
-            df = get_coord(df)
+        try:
+            with st.spinner("Please wait, getting coordinates to plot"):
+                df = get_coord(df)
+        except:
+            st.error("Some Locations Couldnt be Plotted Please try again")
+        
         
         # df = pd.read_csv('test.csv')
 
 
-        fig = px.scatter_geo(df,lat='lat',lon='lon', hover_name="clean_tweet",color="Sentiment")
-        fig.update_layout(title = 'Tweets Sentiment about '+Topic, title_x=0.5)
-        fig.show()
+        # fig = px.scatter_geo(df,lat='lat',lon='lon', hover_name="clean_tweet",color="Sentiment")
+        # fig.update_layout(title = 'Tweets Sentiment about '+Topic, title_x=0.5)
+        # fig.show()
+        st.pydeck_chart(pdk.Deck(
+            map_style='mapbox://styles/mapbox/light-v9',
+            layers=[
+            pdk.Layer(
+                'ScatterplotLayer',
+                df[df["Sentiment"]=="Positive"],
+                pickable=True,
+                filled=True,
+                radius_scale=4000,
+                radius_min_pixels=3,
+                radius_max_pixels=100,
+                get_position=['lon', 'lat'],
+                get_fill_color=[255, 0, 0],
+            ),
+            pdk.Layer(
+                "ScatterplotLayer",
+                df[df["Sentiment"]=="Neutral"],
+                pickable=True,
+                filled=True,
+                radius_scale=4000,
+                radius_min_pixels=3,
+                radius_max_pixels=100,
+                get_position=['lon', 'lat'],
+                get_fill_color=[0, 255, 0],
+                ),
+            pdk.Layer(
+                "ScatterplotLayer",
+                df[df["Sentiment"]=="Negative"],
+                pickable=True,
+                filled=True,
+                radius_scale=4000,
+                radius_min_pixels=3,
+                radius_max_pixels=100,
+                get_position=['lon', 'lat'],
+                get_fill_color=[0, 0,255],
+            )
+           ],
+        ))
 
 
 
